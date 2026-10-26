@@ -26,32 +26,9 @@
 
 ## 시스템 아키텍처
 
-```mermaid
-flowchart LR
-    Client["UDP 클라이언트"]
-    subgraph Server["Net-Iocp.exe · Windows C++ 서버"]
-        Bots["내장 C++ 봇 100개"]
-        IO["UDP :9000 / IOCP<br/>비동기 수신·송신 완료 처리"]
-        Sessions["SessionManager / RudpSession<br/>IP:Port 라우팅 · 패킷 파싱"]
-        Queue["PacketDispatcher / JobQueue"]
-        Game["GameLogic / World<br/>위치 갱신 · 섹터 · AOI"]
-        Send["세션 송신 큐<br/>WSASendTo"]
-        Timer["TimerWheel<br/>재전송 콜백 예약"]
-        Metrics["MetricManager<br/>HTTP :8080/metrics"]
-        Bots -->|UDP 이동 패킷| IO
-        IO --> Sessions --> Queue --> Game
-        Sessions -->|수신 ACK| Send
-        Game -->|주변 플레이어에 위치 전달| Send
-        Send -.->|타이머 등록| Timer
-        Timer -.->|작업 예약| Queue
-        Sessions -.->|패킷·재전송 카운터| Metrics
-        Game -.->|세션·풀 상태 갱신| Metrics
-    end
-    Client -->|UDP| IO
-    Send -->|UDP| Client
-    Prometheus["Prometheus :9090"] -->|5초 간격 수집| Metrics
-    Grafana["Grafana :3000"] -->|지표 조회| Prometheus
-```
+<p align="center">
+  <img src="docs/images/system-architecture.png" width="1100" alt="Net-IOCP 시스템 아키텍처: UDP 클라이언트와 IOCP 네트워크 계층이 요청·응답을 주고받고, 작업 큐를 통해 게임 루프에서 위치와 AOI를 갱신합니다. Prometheus가 메트릭을 수집하고 Grafana가 조회합니다.">
+</p>
 
 ### 위치 패킷 처리 흐름
 
